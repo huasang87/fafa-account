@@ -1,0 +1,56 @@
+<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
+  <!-- 背景 -->
+  <circle cx="256" cy="256" r="256" fill="url(#gradient)"/>
+  
+  <!-- 渐变定义 -->
+  <defs>
+    <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFB6C1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFC0CB;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="earGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#FFB6C1;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#FFC0CB;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- 左耳朵 -->
+  <ellipse cx="180" cy="140" rx="40" ry="100" fill="url(#earGradient)" transform="rotate(-15 180 140)"/>
+  <ellipse cx="180" cy="150" rx="20" ry="70" fill="#FFF0F6" transform="rotate(-15 180 150)"/>
+  
+  <!-- 右耳朵 -->
+  <ellipse cx="332" cy="140" rx="40" ry="100" fill="url(#earGradient)" transform="rotate(15 332 140)"/>
+  <ellipse cx="332" cy="150" rx="20" ry="70" fill="#FFF0F6" transform="rotate(15 332 150)"/>
+  
+  <!-- 兔子脸 -->
+  <circle cx="256" cy="280" r="120" fill="url(#gradient)"/>
+  
+  <!-- 左眼 -->
+  <ellipse cx="220" cy="260" rx="12" ry="18" fill="#333333"/>
+  
+  <!-- 右眼 -->
+  <ellipse cx="292" cy="260" rx="12" ry="18" fill="#333333"/>
+  
+  <!-- 左腮红 -->
+  <ellipse cx="200" cy="290" rx="25" ry="18" fill="#f5576c" opacity="0.3"/>
+  
+  <!-- 右腮红 -->
+  <ellipse cx="312" cy="290" rx="25" ry="18" fill="#f5576c" opacity="0.3"/>
+  
+  <!-- 鼻子 -->
+  <ellipse cx="256" cy="300" rx="10" ry="8" fill="#f5576c"/>
+  
+  <!-- 嘴巴 -->
+  <path d="M 256 305 Q 240 315 230 310" stroke="#f5576c" stroke-width="4" fill="none" stroke-linecap="round"/>
+  <path d="M 256 305 Q 272 315 282 310" stroke="#f5576c" stroke-width="4" fill="none" stroke-linecap="round"/>
+  
+  <!-- 兔子身体 -->
+  <ellipse cx="256" cy="420" rx="140" ry="110" fill="url(#gradient)"/>
+  
+  <!-- 投币口 -->
+  <rect x="226" y="380" width="60" height="6" rx="3" fill="#f5576c"/>
+  
+  <!-- 星星装饰 -->
+  <text x="140" y="420" font-size="40" fill="#FFE4E1">✨</text>
+  <text x="350" y="440" font-size="35" fill="#FFE4E1">💖</text>
+</svg>
