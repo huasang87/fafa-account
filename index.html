@@ -1,0 +1,1400 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✨ Fafa的账本 ✨</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "Microsoft YaHei", "PingFang SC", sans-serif;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 50%, #a855f7 100%);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        /* 闪闪星星背景 */
+        .sparkle {
+            position: fixed;
+            width: 4px;
+            height: 4px;
+            background: white;
+            border-radius: 50%;
+            animation: sparkle 2s infinite;
+            pointer-events: none;
+        }
+
+        @keyframes sparkle {
+            0%, 100% { opacity: 0; transform: scale(0); }
+            50% { opacity: 1; transform: scale(1); }
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            animation: fadeInDown 1s;
+            position: relative;
+        }
+
+        .header h1 {
+            color: white;
+            font-size: 2.5em;
+            text-shadow: 0 0 20px rgba(255, 255, 255, 0.8),
+                         0 0 40px rgba(255, 182, 193, 0.6);
+            margin-bottom: 10px;
+        }
+
+        .task-section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin: 20px 0 15px 0;
+        }
+
+        .refresh-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.8em;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+        }
+
+        .refresh-btn:hover {
+            transform: rotate(180deg) scale(1.2);
+        }
+
+        .refresh-btn:active {
+            transform: rotate(180deg) scale(1);
+        }
+
+        /* 米菲兔存钱罐 */
+        .piggy-bank {
+            background: linear-gradient(145deg, #ffeef8, #fff0f6);
+            border-radius: 30px;
+            padding: 30px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(168, 85, 247, 0.4),
+                       inset 0 0 20px rgba(255, 255, 255, 0.5);
+            margin-bottom: 30px;
+            position: relative;
+            animation: fadeIn 1s;
+        }
+
+        .add-record-btn {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(135deg, #f5576c, #a855f7);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 1.5em;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4);
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .add-record-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.6);
+        }
+
+        .add-record-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* 小兔存钱罐 */
+        .rabbit-bank {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            position: relative;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* 兔子身体 */
+        .rabbit-body {
+            width: 100px;
+            height: 80px;
+            background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+            border-radius: 50% 50% 45% 45%;
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 5px 20px rgba(255, 182, 193, 0.5),
+                       inset 0 -10px 20px rgba(255, 255, 255, 0.3);
+        }
+
+        /* 投币口 */
+        .coin-slot {
+            width: 30px;
+            height: 3px;
+            background: #f5576c;
+            position: absolute;
+            top: 15px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-radius: 2px;
+        }
+
+        /* 兔耳朵 */
+        .rabbit-ear {
+            width: 15px;
+            height: 50px;
+            background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+            border-radius: 50% 50% 0 0;
+            position: absolute;
+            bottom: 60px;
+            box-shadow: inset 0 10px 15px rgba(255, 255, 255, 0.5);
+        }
+
+        .rabbit-ear.left {
+            left: 25px;
+            transform: rotate(-10deg);
+        }
+
+        .rabbit-ear.right {
+            right: 25px;
+            transform: rotate(10deg);
+        }
+
+        /* 耳朵内部 */
+        .rabbit-ear::after {
+            content: '';
+            width: 8px;
+            height: 35px;
+            background: #FFF0F6;
+            border-radius: 50% 50% 0 0;
+            position: absolute;
+            left: 50%;
+            top: 5px;
+            transform: translateX(-50%);
+        }
+
+        /* 兔子脸 */
+        .rabbit-face {
+            width: 70px;
+            height: 60px;
+            background: linear-gradient(135deg, #FFB6C1, #FFC0CB);
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 3px 15px rgba(255, 182, 193, 0.4),
+                       inset 0 5px 15px rgba(255, 255, 255, 0.4);
+        }
+
+        /* 眼睛 */
+        .rabbit-eye {
+            width: 8px;
+            height: 12px;
+            background: #333;
+            border-radius: 50%;
+            position: absolute;
+            top: 20px;
+        }
+
+        .rabbit-eye.left {
+            left: 18px;
+        }
+
+        .rabbit-eye.right {
+            right: 18px;
+        }
+
+        /* 腮红 */
+        .rabbit-cheek {
+            width: 18px;
+            height: 12px;
+            background: rgba(245, 87, 108, 0.3);
+            border-radius: 50%;
+            position: absolute;
+            top: 28px;
+        }
+
+        .rabbit-cheek.left {
+            left: 8px;
+        }
+
+        .rabbit-cheek.right {
+            right: 8px;
+        }
+
+        /* 鼻子 */
+        .rabbit-nose {
+            width: 6px;
+            height: 5px;
+            background: #f5576c;
+            border-radius: 0 0 50% 50%;
+            position: absolute;
+            top: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        /* 嘴巴 */
+        .rabbit-mouth {
+            width: 20px;
+            height: 10px;
+            border: 2px solid #f5576c;
+            border-top: none;
+            border-radius: 0 0 50% 50%;
+            position: absolute;
+            top: 36px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .balance {
+            font-size: 2em;
+            color: #a855f7;
+            font-weight: bold;
+            text-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+        }
+
+        .balance-label {
+            font-size: 1.2em;
+            color: #f5576c;
+            margin-bottom: 10px;
+        }
+
+        /* 任务列表 */
+        .section-title {
+            color: white;
+            font-size: 1.5em;
+            margin: 20px 0 15px 0;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        .task-list {
+            display: grid;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .task-card {
+            background: linear-gradient(145deg, rgba(255, 255, 255, 0.95), rgba(255, 240, 246, 0.9));
+            border-radius: 20px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .task-card::before {
+            content: "";
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+            transform: rotate(45deg);
+            transition: all 0.5s;
+        }
+
+        .task-card:hover::before {
+            left: 100%;
+        }
+
+        .task-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(168, 85, 247, 0.4);
+        }
+
+        .task-card.completed {
+            opacity: 0.5;
+            position: relative;
+        }
+
+        .task-card.completed::after {
+            content: '✓ 已完成';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(168, 85, 247, 0.9);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 15px;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .task-card.weekly {
+            border: 3px solid #fbbf24;
+            background: linear-gradient(145deg, rgba(255, 251, 235, 0.95), rgba(254, 249, 195, 0.9));
+        }
+
+        .task-card.weekly .task-name::before {
+            content: '⭐ ';
+        }
+
+        .task-count {
+            font-size: 1em;
+            color: #a855f7;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        .task-count.full {
+            color: #999;
+        }
+
+        /* 确认对话框 */
+        .confirm-buttons {
+            display: flex;
+            gap: 15px;
+            margin-top: 20px;
+            justify-content: center;
+        }
+
+        .confirm-buttons button {
+            flex: 1;
+            max-width: 150px;
+            padding: 15px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1.1em;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .btn-cancel {
+            background: #e5e7eb;
+            color: #666;
+        }
+
+        .btn-cancel:hover {
+            background: #d1d5db;
+        }
+
+        .btn-confirm {
+            background: linear-gradient(135deg, #f5576c, #a855f7);
+            color: white;
+            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4);
+        }
+
+        .btn-confirm:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.6);
+        }
+
+        /* 手动记账表单 */
+        .record-form {
+            margin-top: 20px;
+        }
+
+        .record-form input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #f5576c;
+            border-radius: 15px;
+            font-size: 1.1em;
+            margin-bottom: 15px;
+            outline: none;
+            transition: all 0.3s;
+            box-sizing: border-box;
+        }
+
+        .record-form input:focus {
+            border-color: #a855f7;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+        }
+
+        .record-type-btns {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .type-btn {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #e5e7eb;
+            background: white;
+            border-radius: 15px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .type-btn.income {
+            color: #4ade80;
+        }
+
+        .type-btn.expense {
+            color: #f5576c;
+        }
+
+        .type-btn.active.income {
+            background: #4ade80;
+            color: white;
+            border-color: #4ade80;
+        }
+
+        .type-btn.active.expense {
+            background: #f5576c;
+            color: white;
+            border-color: #f5576c;
+        }
+
+        .task-name {
+            font-size: 1.3em;
+            color: #a855f7;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .task-reward {
+            font-size: 1.5em;
+            color: #f5576c;
+            font-weight: bold;
+        }
+
+        /* 金币动画 */
+        .coin {
+            position: fixed;
+            font-size: 30px;
+            pointer-events: none;
+            z-index: 9999;
+            animation: coinFly 1s ease-in-out forwards;
+        }
+
+        @keyframes coinFly {
+            0% {
+                transform: translate(0, 0) rotate(0deg) scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: translate(var(--tx), var(--ty)) rotate(720deg) scale(0.5);
+                opacity: 0;
+            }
+        }
+
+        /* 按钮样式 */
+        .btn {
+            background: linear-gradient(135deg, #f5576c, #a855f7);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4);
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.6);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* 输入框样式 */
+        .input-group {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #f5576c;
+            border-radius: 15px;
+            font-size: 1em;
+            margin-bottom: 10px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .input-group input:focus {
+            border-color: #a855f7;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
+        }
+
+        /* 历史记录 */
+        .history-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .history-item.income {
+            border-left: 5px solid #4ade80;
+        }
+
+        .history-item.expense {
+            border-left: 5px solid #f5576c;
+        }
+
+        .history-date {
+            font-size: 0.8em;
+            color: #999;
+        }
+
+        .history-amount {
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        .history-amount.income {
+            color: #4ade80;
+        }
+
+        .history-amount.expense {
+            color: #f5576c;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* 模态框 */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 30px;
+            padding: 30px;
+            max-width: 400px;
+            width: 90%;
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .modal-buttons .btn {
+            flex: 1;
+        }
+
+        /* 自定义提示框 */
+        .custom-alert {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .custom-alert.show {
+            display: flex;
+            animation: fadeIn 0.3s;
+        }
+
+        .alert-box {
+            background: linear-gradient(145deg, #ffeef8, #fff0f6);
+            border-radius: 30px;
+            padding: 40px 30px;
+            max-width: 350px;
+            width: 85%;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(168, 85, 247, 0.4);
+            animation: slideIn 0.3s;
+            border: 3px solid rgba(168, 85, 247, 0.3);
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .alert-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        .alert-title {
+            font-size: 1.5em;
+            color: #a855f7;
+            font-weight: bold;
+            margin-bottom: 15px;
+        }
+
+        .alert-message {
+            font-size: 1.1em;
+            color: #666;
+            margin-bottom: 10px;
+            line-height: 1.6;
+        }
+
+        .alert-time {
+            font-size: 1.2em;
+            color: #f5576c;
+            font-weight: bold;
+            margin-bottom: 25px;
+        }
+
+        .alert-btn {
+            background: linear-gradient(135deg, #f5576c, #a855f7);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4);
+            transition: all 0.3s;
+            font-weight: bold;
+            display: block;
+            margin: 0 auto;
+            min-width: 120px;
+        }
+
+        .alert-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.6);
+        }
+
+        .alert-btn:active {
+            transform: translateY(0);
+        }
+
+        /* 隐藏alert按钮时的状态 */
+        .alert-box .alert-btn.hidden {
+            display: none;
+        }
+
+        /* 底部导航栏 */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(255, 255, 255, 0.98), rgba(255, 255, 255, 0.95));
+            backdrop-filter: blur(10px);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            padding: 10px 0 15px 0;
+            box-shadow: 0 -5px 20px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            max-width: 100%;
+        }
+
+        .nav-btn {
+            background: none;
+            border: none;
+            font-size: 2.5em;
+            cursor: pointer;
+            padding: 5px 15px;
+            transition: all 0.3s;
+            opacity: 0.5;
+            position: relative;
+            flex: 1;
+            max-width: 120px;
+        }
+
+        .nav-btn:hover {
+            transform: scale(1.1);
+        }
+
+        .nav-btn.active {
+            opacity: 1;
+            transform: scale(1.2);
+        }
+
+        .nav-btn.active::after {
+            content: '';
+            position: absolute;
+            bottom: 0px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 30px;
+            height: 3px;
+            background: linear-gradient(135deg, #f5576c, #a855f7);
+            border-radius: 2px;
+        }
+
+        /* 内容区域 */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.3s;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        /* 给底部留出空间 */
+        .container {
+            padding-bottom: 120px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>✨ Fafa的账本 ✨</h1>
+        </div>
+
+        <!-- 米菲兔存钱罐 -->
+        <div class="piggy-bank" id="piggyBank">
+            <button class="add-record-btn" onclick="showAddRecordDialog()">+</button>
+            
+            <!-- 小兔存钱罐 -->
+            <div class="rabbit-bank">
+                <div class="rabbit-ear left"></div>
+                <div class="rabbit-ear right"></div>
+                <div class="rabbit-face">
+                    <div class="rabbit-eye left"></div>
+                    <div class="rabbit-eye right"></div>
+                    <div class="rabbit-cheek left"></div>
+                    <div class="rabbit-cheek right"></div>
+                    <div class="rabbit-nose"></div>
+                    <div class="rabbit-mouth"></div>
+                </div>
+                <div class="rabbit-body">
+                    <div class="coin-slot"></div>
+                </div>
+            </div>
+            
+            <div class="balance-label">Fafa的小金库</div>
+            <div class="balance" id="balance">0 元</div>
+        </div>
+
+        <!-- 赚钱任务区域 -->
+        <div class="content-section active" id="earnSection">
+            <div class="task-section-header">
+                <h2 class="section-title" style="margin: 0;">💰 赚钱任务</h2>
+                <button class="refresh-btn" onclick="showRefreshConfirm()">🔄</button>
+            </div>
+            <div class="task-list" id="taskList">
+                <div class="task-card weekly" data-task="每周领零花钱" data-amount="20" data-type="weekly" data-max="1">
+                    <div class="task-name">每周领零花钱</div>
+                    <div class="task-reward">+20 元</div>
+                    <div class="task-count" data-count="weekly">0/1</div>
+                </div>
+                <div class="task-card" data-task="洗脸刷牙" data-amount="2" data-type="daily" data-max="2">
+                    <div class="task-name">🪥 洗脸刷牙</div>
+                    <div class="task-reward">+2 元</div>
+                    <div class="task-count" data-count="洗脸刷牙">0/2</div>
+                </div>
+                <div class="task-card" data-task="洗澡" data-amount="2" data-type="daily" data-max="1">
+                    <div class="task-name">🛁 洗澡</div>
+                    <div class="task-reward">+2 元</div>
+                    <div class="task-count" data-count="洗澡">0/1</div>
+                </div>
+                <div class="task-card" data-task="攀岩课" data-amount="10" data-type="weekly-normal" data-max="1">
+                    <div class="task-name">🧗 攀岩课</div>
+                    <div class="task-reward">+10 元</div>
+                    <div class="task-count" data-count="攀岩课">0/1</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 花钱记录区域 -->
+        <div class="content-section" id="spendSection">
+            <h2 class="section-title">🛍️ 买东西</h2>
+            <div class="input-group">
+                <input type="text" id="expenseName" placeholder="买了什么？(比如：玩具)">
+                <input type="number" id="expenseAmount" placeholder="花了多少钱？">
+                <button class="btn" onclick="addExpense()">确认花钱</button>
+            </div>
+        </div>
+
+        <!-- 历史记录区域 -->
+        <div class="content-section" id="historySection">
+            <h2 class="section-title">📖 记录</h2>
+            <div class="history-list" id="historyList"></div>
+        </div>
+    </div>
+
+    <!-- 底部导航栏 -->
+    <div class="bottom-nav">
+        <button class="nav-btn active" onclick="switchTab('earn')" data-tab="earn">💰</button>
+        <button class="nav-btn" onclick="switchTab('spend')" data-tab="spend">🛍️</button>
+        <button class="nav-btn" onclick="switchTab('history')" data-tab="history">📖</button>
+    </div>
+
+    <!-- 自定义提示框 -->
+    <div class="custom-alert" id="customAlert">
+        <div class="alert-box">
+            <div class="alert-icon" id="alertIcon">💜</div>
+            <div class="alert-title" id="alertTitle">提示</div>
+            <div class="alert-message" id="alertMessage"></div>
+            <div class="alert-time" id="alertTime"></div>
+            <button class="alert-btn" onclick="closeAlert()">知道啦！</button>
+        </div>
+    </div>
+
+    <!-- 音效 -->
+    <audio id="coinSound" preload="auto">
+        <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ8MUqXi8LRjHQU7k9n0yH0rBSV+zPLaizsIGGS56+ibUBELTKHd8sFuJAUuhNP0z3wwBiBy0+/glVYTDEuj4fGxaBwGO5HY88p+LAUle8rx3Ys+CRlls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUn" type="audio/wav">
+    </audio>
+
+    <script>
+        // 数据存储
+        let balance = 0;
+        let history = [];
+        let taskProgress = {
+            '每周领零花钱': 0,
+            '洗脸刷牙': 0,
+            '洗澡': 0,
+            '攀岩课': 0
+        };
+
+        // 初始化
+        function init() {
+            loadData();
+            updateBalance();
+            updateHistory();
+            createSparkles();
+            checkTaskReset();
+            updateAllTaskCounts();
+        }
+
+        // 检查任务重置（每日/每周）
+        function checkTaskReset() {
+            const today = new Date().toDateString();
+            const lastDaily = localStorage.getItem('lastDailyReset');
+            
+            // 检查每日任务重置
+            if (lastDaily !== today) {
+                taskProgress['洗脸刷牙'] = 0;
+                taskProgress['洗澡'] = 0;
+                localStorage.setItem('lastDailyReset', today);
+                saveTaskProgress();
+            }
+            
+            // 检查每周任务重置
+            const currentWeek = getWeekNumber();
+            const lastWeek = localStorage.getItem('lastWeekReset');
+            
+            if (lastWeek !== currentWeek.toString()) {
+                taskProgress['每周领零花钱'] = 0;
+                taskProgress['攀岩课'] = 0;
+                localStorage.setItem('lastWeekReset', currentWeek.toString());
+                saveTaskProgress();
+            }
+        }
+
+        // 获取当前周数
+        function getWeekNumber() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), 0, 1);
+            const diff = now - start;
+            const oneWeek = 1000 * 60 * 60 * 24 * 7;
+            return Math.floor(diff / oneWeek);
+        }
+
+        // 获取下次重置时间
+        function getNextResetTime(type) {
+            const now = new Date();
+            
+            if (type === 'daily') {
+                const tomorrow = new Date(now);
+                tomorrow.setDate(now.getDate() + 1);
+                tomorrow.setHours(0, 0, 0, 0);
+                const month = tomorrow.getMonth() + 1;
+                const date = tomorrow.getDate();
+                return `明天 ${month}月${date}日`;
+            } else if (type === 'weekly' || type === 'weekly-normal') {
+                const dayOfWeek = now.getDay();
+                const daysUntilMonday = dayOfWeek === 0 ? 1 : 8 - dayOfWeek;
+                const nextMonday = new Date(now);
+                nextMonday.setDate(now.getDate() + daysUntilMonday);
+                nextMonday.setHours(0, 0, 0, 0);
+                const month = nextMonday.getMonth() + 1;
+                const date = nextMonday.getDate();
+                return `下周一 ${month}月${date}日`;
+            }
+        }
+
+        // 显示自定义提示框
+        function showAlert(icon, title, message, time = '', customContent = null) {
+            document.getElementById('alertIcon').textContent = icon;
+            document.getElementById('alertTitle').textContent = title;
+            document.getElementById('alertMessage').textContent = message;
+            document.getElementById('alertTime').textContent = time;
+            
+            const alertBox = document.querySelector('.alert-box');
+            
+            // 清除之前的自定义内容
+            const existingCustom = alertBox.querySelector('.custom-content');
+            if (existingCustom) existingCustom.remove();
+            
+            const defaultBtn = alertBox.querySelector('.alert-btn');
+            
+            if (customContent) {
+                // 隐藏默认按钮，插入自定义内容
+                defaultBtn.classList.add('hidden');
+                const wrapper = document.createElement('div');
+                wrapper.className = 'custom-content';
+                wrapper.appendChild(customContent);
+                alertBox.appendChild(wrapper);
+            } else {
+                // 显示默认按钮
+                defaultBtn.classList.remove('hidden');
+            }
+            
+            document.getElementById('customAlert').classList.add('show');
+        }
+
+        // 关闭提示框
+        function closeAlert() {
+            document.getElementById('customAlert').classList.remove('show');
+        }
+
+        // 显示刷新确认对话框
+        function showRefreshConfirm() {
+            const content = document.createElement('div');
+            const buttons = document.createElement('div');
+            buttons.className = 'confirm-buttons';
+            buttons.innerHTML = `
+                <button class="btn-cancel" onclick="closeAlert()">取消</button>
+                <button class="btn-confirm" onclick="confirmReset()">确认刷新</button>
+            `;
+            content.appendChild(buttons);
+            
+            showAlert(
+                '🔄',
+                '刷新任务',
+                '确定要刷新所有可刷新的任务吗？',
+                '（每日任务和每周任务会被重置）',
+                content
+            );
+        }
+
+        // 确认重置
+        function confirmReset() {
+            taskProgress['洗脸刷牙'] = 0;
+            taskProgress['洗澡'] = 0;
+            taskProgress['攀岩课'] = 0;
+            saveTaskProgress();
+            updateAllTaskCounts();
+            closeAlert();
+            
+            setTimeout(() => {
+                showAlert('✨', '刷新成功', '任务已重置！', '可以继续赚钱啦~');
+            }, 300);
+        }
+
+        // 显示手动记账对话框
+        let recordType = 'income'; // 默认收入
+        
+        function showAddRecordDialog() {
+            recordType = 'income';
+            const content = document.createElement('div');
+            content.innerHTML = `
+                <div class="record-form">
+                    <div class="record-type-btns">
+                        <button class="type-btn income active" onclick="selectRecordType('income')">💰 收入</button>
+                        <button class="type-btn expense" onclick="selectRecordType('expense')">🛍️ 支出</button>
+                    </div>
+                    <input type="text" id="recordTitle" placeholder="写点什么？(比如：压岁钱)">
+                    <input type="number" id="recordAmount" placeholder="多少钱？">
+                    <div class="confirm-buttons">
+                        <button class="btn-cancel" onclick="closeAlert()">取消</button>
+                        <button class="btn-confirm" onclick="submitRecord()">确认</button>
+                    </div>
+                </div>
+            `;
+            
+            showAlert(
+                '📝',
+                '手动记账',
+                '',
+                '',
+                content
+            );
+        }
+
+        // 选择记账类型
+        function selectRecordType(type) {
+            recordType = type;
+            document.querySelectorAll('.type-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`.type-btn.${type}`).classList.add('active');
+        }
+
+        // 提交记账
+        function submitRecord() {
+            const title = document.getElementById('recordTitle').value.trim();
+            const amount = parseInt(document.getElementById('recordAmount').value);
+            
+            if (!title || !amount || amount <= 0) {
+                showAlert('💭', '温馨提示', '请填写完整信息哦！', '');
+                return;
+            }
+            
+            if (recordType === 'expense' && amount > balance) {
+                showAlert('😢', '余额不足', `钱不够啦！Fafa的小金库只有 ${balance} 元哦~`, '');
+                return;
+            }
+            
+            // 更新余额
+            if (recordType === 'income') {
+                balance += amount;
+            } else {
+                balance -= amount;
+            }
+            
+            saveData();
+            updateBalance();
+            addHistory(recordType === 'income' ? '收入' : '支出', title, amount);
+            
+            closeAlert();
+            
+            setTimeout(() => {
+                const icon = recordType === 'income' ? '💰' : '🛍️';
+                const sign = recordType === 'income' ? '+' : '-';
+                showAlert(icon, '记账成功', `${title}`, `${sign}${amount} 元`);
+            }, 300);
+        }
+
+        // 检查并重置每周任务
+        function checkWeeklyTasks() {
+            const currentWeek = getWeekNumber();
+            const lastWeek = localStorage.getItem('lastWeek');
+            
+            if (lastWeek !== currentWeek.toString()) {
+                // 新的一周，重置每周任务
+                weeklyTasks = {};
+                localStorage.setItem('lastWeek', currentWeek.toString());
+                localStorage.setItem('weeklyTasks', JSON.stringify(weeklyTasks));
+            } else {
+                // 加载已完成的每周任务
+                const saved = localStorage.getItem('weeklyTasks');
+                weeklyTasks = saved ? JSON.parse(saved) : {};
+            }
+            
+            updateTaskCards();
+        }
+
+        // 创建闪闪星星
+        function createSparkles() {
+            for (let i = 0; i < 30; i++) {
+                setTimeout(() => {
+                    const sparkle = document.createElement('div');
+                    sparkle.className = 'sparkle';
+                    sparkle.style.left = Math.random() * 100 + '%';
+                    sparkle.style.top = Math.random() * 100 + '%';
+                    sparkle.style.animationDelay = Math.random() * 2 + 's';
+                    document.body.appendChild(sparkle);
+                }, i * 100);
+            }
+        }
+
+        // 更新单个任务的次数显示
+        function updateTaskCount(taskName) {
+            const card = document.querySelector(`[data-task="${taskName}"]`);
+            if (!card) return;
+            
+            const countElement = card.querySelector('.task-count');
+            const max = parseInt(card.dataset.max);
+            const current = taskProgress[taskName] || 0;
+            
+            countElement.textContent = `${current}/${max}`;
+            
+            if (current >= max) {
+                card.classList.add('completed');
+                countElement.classList.add('full');
+            } else {
+                card.classList.remove('completed');
+                countElement.classList.remove('full');
+            }
+        }
+
+        // 更新所有任务次数
+        function updateAllTaskCounts() {
+            Object.keys(taskProgress).forEach(taskName => {
+                updateTaskCount(taskName);
+            });
+        }
+
+        // 保存任务进度
+        function saveTaskProgress() {
+            localStorage.setItem('taskProgress', JSON.stringify(taskProgress));
+        }
+
+        // 加载任务进度
+        function loadTaskProgress() {
+            const saved = localStorage.getItem('taskProgress');
+            if (saved) {
+                taskProgress = JSON.parse(saved);
+            }
+        }
+
+        // 任务点击
+        document.getElementById('taskList').addEventListener('click', (e) => {
+            const card = e.target.closest('.task-card');
+            if (!card) return;
+            
+            const taskName = card.dataset.task;
+            const max = parseInt(card.dataset.max);
+            const current = taskProgress[taskName] || 0;
+            const type = card.dataset.type;
+            
+            // 检查是否已达到上限
+            if (current >= max) {
+                const nextTime = getNextResetTime(type);
+                showAlert(
+                    '⏰',
+                    '任务已完成',
+                    `这个任务已经完成 ${max} 次啦！`,
+                    `下次可以做的时间：${nextTime}`
+                );
+                return;
+            }
+            
+            const amount = parseInt(card.dataset.amount);
+            completeTask(card, taskName, amount);
+        });
+
+        // 完成任务
+        function completeTask(card, taskName, amount) {
+            // 增加任务进度
+            taskProgress[taskName] = (taskProgress[taskName] || 0) + 1;
+            saveTaskProgress();
+            updateTaskCount(taskName);
+            
+            // 播放金币动画
+            playCoinAnimation(card, amount);
+            
+            // 更新余额
+            balance += amount;
+            saveData();
+            updateBalance();
+            
+            // 添加历史记录
+            addHistory('收入', taskName, amount);
+        }
+
+        // 金币飞行动画
+        function playCoinAnimation(startElement, count) {
+            const startRect = startElement.getBoundingClientRect();
+            const endElement = document.getElementById('piggyBank');
+            const endRect = endElement.getBoundingClientRect();
+            
+            // 播放音效
+            playSound();
+            
+            // 创建多个金币
+            for (let i = 0; i < Math.min(count, 10); i++) {
+                setTimeout(() => {
+                    const coin = document.createElement('div');
+                    coin.className = 'coin';
+                    coin.textContent = '💰';
+                    coin.style.left = startRect.left + startRect.width / 2 + 'px';
+                    coin.style.top = startRect.top + startRect.height / 2 + 'px';
+                    
+                    const tx = endRect.left + endRect.width / 2 - startRect.left - startRect.width / 2;
+                    const ty = endRect.top + endRect.height / 2 - startRect.top - startRect.height / 2;
+                    
+                    coin.style.setProperty('--tx', tx + 'px');
+                    coin.style.setProperty('--ty', ty + 'px');
+                    
+                    document.body.appendChild(coin);
+                    
+                    setTimeout(() => {
+                        coin.remove();
+                        // 最后一个金币时震动存钱罐
+                        if (i === Math.min(count, 10) - 1) {
+                            endElement.style.animation = 'none';
+                            setTimeout(() => {
+                                endElement.style.animation = 'bounce 0.5s';
+                            }, 10);
+                        }
+                    }, 1000);
+                }, i * 100);
+            }
+        }
+
+        // 播放音效
+        function playSound() {
+            const sound = document.getElementById('coinSound');
+            sound.currentTime = 0;
+            sound.play().catch(() => {});
+        }
+
+        // 添加支出
+        function addExpense() {
+            const name = document.getElementById('expenseName').value.trim();
+            const amount = parseInt(document.getElementById('expenseAmount').value);
+            
+            if (!name || !amount || amount <= 0) {
+                showAlert('💭', '温馨提示', '请填写买了什么和花了多少钱哦！', '');
+                return;
+            }
+            
+            if (amount > balance) {
+                showAlert('😢', '余额不足', `钱不够啦！Fafa的小金库只有 ${balance} 元哦~`, '');
+                return;
+            }
+            
+            balance -= amount;
+            saveData();
+            updateBalance();
+            addHistory('支出', name, amount);
+            
+            document.getElementById('expenseName').value = '';
+            document.getElementById('expenseAmount').value = '';
+            
+            showAlert('✨', '花钱成功', `已经从小金库拿出 ${amount} 元啦！`, `买了：${name}`);
+        }
+
+        // 添加历史记录
+        function addHistory(type, name, amount) {
+            const record = {
+                type,
+                name,
+                amount,
+                date: new Date().toLocaleString('zh-CN')
+            };
+            history.unshift(record);
+            saveData();
+            updateHistory();
+        }
+
+        // 更新余额显示
+        function updateBalance() {
+            document.getElementById('balance').textContent = balance + ' 元';
+        }
+
+        // 更新历史记录显示
+        function updateHistory() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            
+            history.slice(0, 20).forEach(record => {
+                const item = document.createElement('div');
+                item.className = `history-item ${record.type === '收入' ? 'income' : 'expense'}`;
+                item.innerHTML = `
+                    <div>
+                        <div>${record.name}</div>
+                        <div class="history-date">${record.date}</div>
+                    </div>
+                    <div class="history-amount ${record.type === '收入' ? 'income' : 'expense'}">
+                        ${record.type === '收入' ? '+' : '-'}${record.amount} 元
+                    </div>
+                `;
+                historyList.appendChild(item);
+            });
+        }
+
+        // 保存数据
+        function saveData() {
+            localStorage.setItem('fafaBalance', balance);
+            localStorage.setItem('fafaHistory', JSON.stringify(history));
+        }
+
+        // 加载数据
+        function loadData() {
+            balance = parseInt(localStorage.getItem('fafaBalance')) || 0;
+            const savedHistory = localStorage.getItem('fafaHistory');
+            history = savedHistory ? JSON.parse(savedHistory) : [];
+            loadTaskProgress();
+        }
+
+        // 切换标签页
+        function switchTab(tab) {
+            // 隐藏所有内容区域
+            document.querySelectorAll('.content-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 取消所有按钮激活状态
+            document.querySelectorAll('.nav-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // 显示对应内容
+            if (tab === 'earn') {
+                document.getElementById('earnSection').classList.add('active');
+            } else if (tab === 'spend') {
+                document.getElementById('spendSection').classList.add('active');
+            } else if (tab === 'history') {
+                document.getElementById('historySection').classList.add('active');
+            }
+            
+            // 激活对应按钮
+            document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add('active');
+        }
+
+        // 初始化应用
+        init();
+    </script>
+</body>
+</html>
