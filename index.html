@@ -65,6 +65,26 @@
             margin: 20px 0 15px 0;
         }
 
+        /* 清理按钮 */
+        .clear-btn {
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.5em;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 5px;
+            filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.3));
+        }
+
+        .clear-btn:hover {
+            transform: scale(1.2);
+        }
+
+        .clear-btn:active {
+            transform: scale(1);
+        }
+
         .refresh-btn {
             background: none;
             border: none;
@@ -472,6 +492,77 @@
             border-color: #f5576c;
         }
 
+        /* 密码验证输入框 */
+        .password-inputs {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin: 25px 0;
+        }
+
+        .password-input {
+            width: 50px;
+            height: 60px;
+            font-size: 2em;
+            text-align: center;
+            border: 3px solid #f5576c;
+            border-radius: 15px;
+            outline: none;
+            font-weight: bold;
+            color: #a855f7;
+            transition: all 0.3s;
+        }
+
+        .password-input:focus {
+            border-color: #a855f7;
+            box-shadow: 0 0 15px rgba(168, 85, 247, 0.4);
+            transform: scale(1.05);
+        }
+
+        .password-input.correct {
+            border-color: #4ade80;
+            background: #f0fdf4;
+        }
+
+        .password-input.wrong {
+            border-color: #ef4444;
+            background: #fef2f2;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        .verify-btn {
+            background: linear-gradient(135deg, #f5576c, #a855f7);
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 25px;
+            font-size: 1.2em;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(168, 85, 247, 0.4);
+            transition: all 0.3s;
+            font-weight: bold;
+            display: block;
+            margin: 20px auto 0;
+            opacity: 0.5;
+            pointer-events: none;
+        }
+
+        .verify-btn.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .verify-btn.active:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(168, 85, 247, 0.6);
+        }
+
         .task-name {
             font-size: 1.3em;
             color: #a855f7;
@@ -840,9 +931,9 @@
                 <button class="refresh-btn" onclick="showRefreshConfirm()">🔄</button>
             </div>
             <div class="task-list" id="taskList">
-                <div class="task-card weekly" data-task="每周领零花钱" data-amount="20" data-type="weekly" data-max="1">
+                <div class="task-card weekly" data-task="每周领零花钱" data-amount="10" data-type="weekly" data-max="1">
                     <div class="task-name">每周领零花钱</div>
-                    <div class="task-reward">+20 元</div>
+                    <div class="task-reward">+10 元</div>
                     <div class="task-count" data-count="weekly">0/1</div>
                 </div>
                 <div class="task-card" data-task="洗脸刷牙" data-amount="2" data-type="daily" data-max="2">
@@ -875,7 +966,10 @@
 
         <!-- 历史记录区域 -->
         <div class="content-section" id="historySection">
-            <h2 class="section-title">📖 记录</h2>
+            <div class="task-section-header">
+                <h2 class="section-title" style="margin: 0;">📖 记录</h2>
+                <button class="clear-btn" onclick="showClearConfirm()" title="清空数据">🧹</button>
+            </div>
             <div class="history-list" id="historyList"></div>
         </div>
     </div>
@@ -1121,6 +1215,148 @@
                 const icon = recordType === 'income' ? '💰' : '🛍️';
                 const sign = recordType === 'income' ? '+' : '-';
                 showAlert(icon, '记账成功', `${title}`, `${sign}${amount} 元`);
+            }, 300);
+        }
+
+        // 显示清空确认
+        function showClearConfirm() {
+            const content = document.createElement('div');
+            const buttons = document.createElement('div');
+            buttons.className = 'confirm-buttons';
+            buttons.innerHTML = `
+                <button class="btn-cancel" onclick="closeAlert()">取消</button>
+                <button class="btn-confirm" onclick="showPasswordVerify()">确认清空</button>
+            `;
+            content.appendChild(buttons);
+            
+            showAlert(
+                '⚠️',
+                '清空所有数据',
+                '确定要清空所有历史记录吗？',
+                '此操作不可恢复！',
+                content
+            );
+        }
+
+        // 显示密码验证
+        function showPasswordVerify() {
+            const content = document.createElement('div');
+            content.innerHTML = `
+                <div class="password-inputs">
+                    <input type="text" maxlength="1" class="password-input" id="pwd1" oninput="handlePasswordInput(0)" onkeydown="handlePasswordKeydown(event, 0)">
+                    <input type="text" maxlength="1" class="password-input" id="pwd2" oninput="handlePasswordInput(1)" onkeydown="handlePasswordKeydown(event, 1)">
+                    <input type="text" maxlength="1" class="password-input" id="pwd3" oninput="handlePasswordInput(2)" onkeydown="handlePasswordKeydown(event, 2)">
+                    <input type="text" maxlength="1" class="password-input" id="pwd4" oninput="handlePasswordInput(3)" onkeydown="handlePasswordKeydown(event, 3)">
+                </div>
+                <button class="verify-btn" id="verifyBtn" onclick="verifyPassword()">确认清空</button>
+            `;
+            
+            showAlert(
+                '🔐',
+                '输入密码',
+                '请输入4位数字密码',
+                '',
+                content
+            );
+            
+            // 自动聚焦第一个输入框
+            setTimeout(() => {
+                document.getElementById('pwd1').focus();
+            }, 300);
+        }
+
+        // 处理密码输入
+        function handlePasswordInput(index) {
+            const input = document.getElementById(`pwd${index + 1}`);
+            const value = input.value;
+            
+            // 只允许数字
+            if (!/^\d*$/.test(value)) {
+                input.value = '';
+                return;
+            }
+            
+            // 自动跳到下一个输入框
+            if (value && index < 3) {
+                document.getElementById(`pwd${index + 2}`).focus();
+            }
+            
+            // 检查是否所有都填完了
+            checkPasswordComplete();
+        }
+
+        // 处理键盘事件
+        function handlePasswordKeydown(event, index) {
+            // 按退格键跳到上一个
+            if (event.key === 'Backspace' && !event.target.value && index > 0) {
+                document.getElementById(`pwd${index}`).focus();
+            }
+        }
+
+        // 检查密码是否填完
+        function checkPasswordComplete() {
+            const pwd1 = document.getElementById('pwd1').value;
+            const pwd2 = document.getElementById('pwd2').value;
+            const pwd3 = document.getElementById('pwd3').value;
+            const pwd4 = document.getElementById('pwd4').value;
+            
+            const verifyBtn = document.getElementById('verifyBtn');
+            
+            if (pwd1 && pwd2 && pwd3 && pwd4) {
+                verifyBtn.classList.add('active');
+            } else {
+                verifyBtn.classList.remove('active');
+            }
+        }
+
+        // 验证密码
+        function verifyPassword() {
+            const pwd1 = document.getElementById('pwd1').value;
+            const pwd2 = document.getElementById('pwd2').value;
+            const pwd3 = document.getElementById('pwd3').value;
+            const pwd4 = document.getElementById('pwd4').value;
+            
+            const password = pwd1 + pwd2 + pwd3 + pwd4;
+            const correctPassword = '0916';
+            
+            if (password === correctPassword) {
+                // 密码正确，清空所有数据
+                clearAllData();
+            } else {
+                // 密码错误，显示错误动画
+                document.querySelectorAll('.password-input').forEach(input => {
+                    input.classList.add('wrong');
+                    setTimeout(() => {
+                        input.classList.remove('wrong');
+                        input.value = '';
+                    }, 500);
+                });
+                
+                document.getElementById('pwd1').focus();
+                document.getElementById('verifyBtn').classList.remove('active');
+            }
+        }
+
+        // 清空所有数据
+        function clearAllData() {
+            localStorage.clear();
+            balance = 0;
+            history = [];
+            taskProgress = {
+                '每周领零花钱': 0,
+                '洗脸刷牙': 0,
+                '洗澡': 0,
+                '攀岩课': 0
+            };
+            
+            updateBalance();
+            updateHistory();
+            updateAllTaskCounts();
+            
+            closeAlert();
+            
+            setTimeout(() => {
+                showAlert('✨', '清空成功', '所有数据已清空！', '可以重新开始记账啦~');
             }, 300);
         }
 
