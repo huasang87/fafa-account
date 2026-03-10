@@ -997,6 +997,68 @@
         <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhBTGH0fPTgjMGHm7A7+OZUQ8MUqXi8LRjHQU7k9n0yH0rBSV+zPLaizsIGGS56+ibUBELTKHd8sFuJAUuhNP0z3wwBiBy0+/glVYTDEuj4fGxaBwGO5HY88p+LAUle8rx3Ys+CRlls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUncM3y3ow/CRpls+nqnVESC0+k4PCzZyAGM4/X9M18KgUn" type="audio/wav">
     </audio>
 
+<!-- Firebase SDK -->
+<script type="module">
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
+    import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAs9N_KZX-XKhzIau_SGOXTmCIfNHfxf6E",
+        authDomain: "fafa-account.firebaseapp.com",
+        projectId: "fafa-account",
+        storageBucket: "fafa-account.firebasestorage.app",
+        messagingSenderId: "1047424115167",
+        appId: "1:1047424115167:web:999194a9cd85ebf29de46a"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const userId = 'fafa_main_account';
+    const userDocRef = doc(db, 'users', userId);
+
+    window.firebaseReady = false;
+    window.isLocalUpdate = false;
+
+    window.saveToFirebase = async function(data) {
+        try {
+            await setDoc(userDocRef, data, { merge: true });
+        } catch (error) {
+            console.error('Firebase保存失败:', error);
+        }
+    };
+
+    window.loadFromFirebase = async function() {
+        try {
+            const docSnap = await getDoc(userDocRef);
+            if (docSnap.exists()) {
+                return docSnap.data();
+            }
+            return null;
+        } catch (error) {
+            console.error('Firebase加载失败:', error);
+            return null;
+        }
+    };
+
+    window.startFirebaseSync = function() {
+        onSnapshot(userDocRef, (doc) => {
+            if (doc.exists() && !window.isLocalUpdate && window.firebaseReady) {
+                const data = doc.data();
+                if (data.balance !== undefined) window.balance = data.balance;
+                if (data.history) window.history = data.history;
+                if (data.taskProgress) window.taskProgress = data.taskProgress;
+                
+                if (window.updateBalance) window.updateBalance();
+                if (window.updateHistory) window.updateHistory();
+                if (window.updateAllTaskCounts) window.updateAllTaskCounts();
+            }
+        });
+    };
+
+    window.firebaseReady = true;
+    console.log('✅ Firebase初始化完成');
+</script>
+
     <script>
         // 数据存储
         let balance = 0;
@@ -1009,13 +1071,18 @@
         };
 
         // 初始化
-        function init() {
-            loadData();
+        async function init() {
+            await loadData();
             updateBalance();
             updateHistory();
             createSparkles();
             checkTaskReset();
             updateAllTaskCounts();
+            
+            if (window.firebaseReady && window.startFirebaseSync) {
+                window.startFirebaseSync();
+                console.log('✅ 实时同步已启动');
+            }
         }
 
         // 检查任务重置（每日/每周）
@@ -1423,6 +1490,16 @@
         // 保存任务进度
         function saveTaskProgress() {
             localStorage.setItem('taskProgress', JSON.stringify(taskProgress));
+            
+            if (window.firebaseReady && window.saveToFirebase) {
+                window.isLocalUpdate = true;
+                window.saveToFirebase({
+                    taskProgress: taskProgress,
+                    lastUpdate: new Date().toISOString()
+                }).then(() => {
+                    setTimeout(() => { window.isLocalUpdate = false; }, 1000);
+                });
+            }
         }
 
         // 加载任务进度
@@ -1594,10 +1671,38 @@
         function saveData() {
             localStorage.setItem('fafaBalance', balance);
             localStorage.setItem('fafaHistory', JSON.stringify(history));
+            
+            if (window.firebaseReady && window.saveToFirebase) {
+                window.isLocalUpdate = true;
+                window.saveToFirebase({
+                    balance: balance,
+                    history: history,
+                    taskProgress: taskProgress,
+                    lastUpdate: new Date().toISOString()
+                }).then(() => {
+                    setTimeout(() => { window.isLocalUpdate = false; }, 1000);
+                });
+            }
         }
 
         // 加载数据
-        function loadData() {
+        async function loadData() {
+            if (window.firebaseReady && window.loadFromFirebase) {
+                const firebaseData = await window.loadFromFirebase();
+                if (firebaseData) {
+                    balance = firebaseData.balance || 0;
+                    history = firebaseData.history || [];
+                    taskProgress = firebaseData.taskProgress || {
+                        '每周领零花钱': 0,
+                        '洗脸刷牙': 0,
+                        '洗澡': 0,
+                        '攀岩课': 0
+                    };
+                    console.log('✅ 已从云端加载数据');
+                    return;
+                }
+            }
+            
             balance = parseInt(localStorage.getItem('fafaBalance')) || 0;
             const savedHistory = localStorage.getItem('fafaHistory');
             history = savedHistory ? JSON.parse(savedHistory) : [];
