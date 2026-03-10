@@ -1057,6 +1057,11 @@
 
     window.firebaseReady = true;
     console.log('✅ Firebase初始化完成');
+    
+    // 如果主脚本已经加载，触发初始化
+    if (window.mainScriptReady && window.init) {
+        window.init();
+    }
 </script>
 
     <script>
@@ -1734,8 +1739,21 @@
             document.querySelector(`.nav-btn[data-tab="${tab}"]`).classList.add('active');
         }
 
-        // 初始化应用
-        init();
+        // 标记主脚本已加载
+        window.mainScriptReady = true;
+        
+        // 初始化应用（等待Firebase准备好）
+        if (window.firebaseReady) {
+            init();
+        } else {
+            // Firebase还没准备好，等待它
+            const checkFirebase = setInterval(() => {
+                if (window.firebaseReady) {
+                    clearInterval(checkFirebase);
+                    init();
+                }
+            }, 100);
+        }
     </script>
 </body>
 </html>
