@@ -1044,13 +1044,9 @@ Ctrl+F
         onSnapshot(userDocRef, (doc) => {
             if (doc.exists() && !window.isLocalUpdate && window.firebaseReady) {
                 const data = doc.data();
-                if (data.balance !== undefined) window.balance = data.balance;
-                if (data.history) window.history = data.history;
-                if (data.taskProgress) window.taskProgress = data.taskProgress;
-                
-                if (window.updateBalance) window.updateBalance();
-                if (window.updateHistory) window.updateHistory();
-                if (window.updateAllTaskCounts) window.updateAllTaskCounts();
+                if (window.applyRemoteData) {
+                    window.applyRemoteData(data);
+                }
             }
         });
     };
@@ -1074,6 +1070,10 @@ Ctrl+F
             '洗澡': 0,
             '攀岩课': 0
         };
+        let resetState = {
+            lastDailyReset: '',
+            lastWeekReset: ''
+        };
 
         // 初始化
         async function init() {
@@ -1092,36 +1092,53 @@ Ctrl+F
 
         // 检查任务重置（每日/每周）
         function checkTaskReset() {
-            const today = new Date().toDateString();
-            const lastDaily = localStorage.getItem('lastDailyReset');
+            const today = getDateKey();
+            const lastDaily = resetState.lastDailyReset || localStorage.getItem('lastDailyReset');
+            let changed = false;
             
             // 检查每日任务重置
             if (lastDaily !== today) {
                 taskProgress['洗脸刷牙'] = 0;
                 taskProgress['洗澡'] = 0;
+                resetState.lastDailyReset = today;
                 localStorage.setItem('lastDailyReset', today);
-                saveTaskProgress();
+                changed = true;
             }
             
             // 检查每周任务重置
             const currentWeek = getWeekNumber();
-            const lastWeek = localStorage.getItem('lastWeekReset');
+            const lastWeek = resetState.lastWeekReset || localStorage.getItem('lastWeekReset');
             
             if (lastWeek !== currentWeek.toString()) {
                 taskProgress['每周领零花钱'] = 0;
                 taskProgress['攀岩课'] = 0;
+                resetState.lastWeekReset = currentWeek.toString();
                 localStorage.setItem('lastWeekReset', currentWeek.toString());
+                changed = true;
+            }
+
+            if (changed) {
                 saveTaskProgress();
             }
         }
 
+        // 获取本地日期标识，避免不同语言环境导致判断不一致
+        function getDateKey(date = new Date()) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
         // 获取当前周数
-        function getWeekNumber() {
-            const now = new Date();
-            const start = new Date(now.getFullYear(), 0, 1);
-            const diff = now - start;
-            const oneWeek = 1000 * 60 * 60 * 24 * 7;
-            return Math.floor(diff / oneWeek);
+        function getWeekNumber(date = new Date()) {
+            const target = new Date(date);
+            target.setHours(0, 0, 0, 0);
+            target.setDate(target.getDate() + 4 - (target.getDay() || 7));
+
+            const yearStart = new Date(target.getFullYear(), 0, 1);
+            const week = Math.ceil((((target - yearStart) / 86400000) + 1) / 7);
+            return `${target.getFullYear()}-${String(week).padStart(2, '0')}`;
         }
 
         // 获取下次重置时间
@@ -1206,6 +1223,7 @@ Ctrl+F
         function confirmReset() {
             taskProgress['洗脸刷牙'] = 0;
             taskProgress['洗澡'] = 0;
+            taskProgress['每周领零花钱'] = 0;
             taskProgress['攀岩课'] = 0;
             saveTaskProgress();
             updateAllTaskCounts();
@@ -1495,11 +1513,13 @@ Ctrl+F
         // 保存任务进度
         function saveTaskProgress() {
             localStorage.setItem('taskProgress', JSON.stringify(taskProgress));
+            localStorage.setItem('resetState', JSON.stringify(resetState));
             
             if (window.firebaseReady && window.saveToFirebase) {
                 window.isLocalUpdate = true;
                 window.saveToFirebase({
                     taskProgress: taskProgress,
+                    resetState: resetState,
                     lastUpdate: new Date().toISOString()
                 }).then(() => {
                     setTimeout(() => { window.isLocalUpdate = false; }, 1000);
@@ -1507,11 +1527,42 @@ Ctrl+F
             }
         }
 
+        // 应用云端实时同步数据
+        function applyRemoteData(data) {
+            if (data.balance !== undefined) balance = data.balance;
+            if (data.history) history = data.history;
+            if (data.taskProgress) taskProgress = data.taskProgress;
+            if (data.resetState) {
+                resetState = data.resetState;
+                localStorage.setItem('resetState', JSON.stringify(resetState));
+            } else {
+                resetState = {
+                    lastDailyReset: '',
+                    lastWeekReset: ''
+                };
+            }
+
+            checkTaskReset();
+            updateBalance();
+            updateHistory();
+            updateAllTaskCounts();
+        }
+
         // 加载任务进度
         function loadTaskProgress() {
             const saved = localStorage.getItem('taskProgress');
             if (saved) {
                 taskProgress = JSON.parse(saved);
+            }
+
+            const savedResetState = localStorage.getItem('resetState');
+            if (savedResetState) {
+                resetState = JSON.parse(savedResetState);
+            } else {
+                resetState = {
+                    lastDailyReset: localStorage.getItem('lastDailyReset') || '',
+                    lastWeekReset: localStorage.getItem('lastWeekReset') || ''
+                };
             }
         }
 
@@ -1683,6 +1734,7 @@ Ctrl+F
                     balance: balance,
                     history: history,
                     taskProgress: taskProgress,
+                    resetState: resetState,
                     lastUpdate: new Date().toISOString()
                 }).then(() => {
                     setTimeout(() => { window.isLocalUpdate = false; }, 1000);
@@ -1703,6 +1755,11 @@ Ctrl+F
                         '洗澡': 0,
                         '攀岩课': 0
                     };
+                    resetState = firebaseData.resetState || {
+                        lastDailyReset: '',
+                        lastWeekReset: ''
+                    };
+                    localStorage.setItem('resetState', JSON.stringify(resetState));
                     console.log('✅ 已从云端加载数据');
                     return;
                 }
