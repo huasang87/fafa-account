@@ -910,6 +910,16 @@
         .sync-status[data-state="syncing"],
         .sync-status[data-state="connecting"] { background: rgba(217, 119, 6, 0.9); }
         .sync-status[data-state="offline"] { background: rgba(220, 38, 38, 0.88); }
+
+        .app-version {
+            position: fixed;
+            right: 10px;
+            bottom: 82px;
+            z-index: 90;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 0.72em;
+            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+        }
     </style>
 </head>
 <body>
@@ -993,6 +1003,7 @@
             <div class="history-list" id="historyList"></div>
         </div>
     </div>
+    <div class="app-version">v2.0.1 · 安全同步版</div>
 
     <!-- 底部导航栏 -->
     <div class="bottom-nav">
@@ -1018,9 +1029,12 @@
     </audio>
 
     <!-- Firebase 同步模块：无法访问 Google 时会自动使用安全离线模式。 -->
-    <script type="module" src="firebase-sync.js"></script>
+    <script type="module" src="firebase-sync.js?v=2.0.1"></script>
 
     <script>
+        const APP_VERSION = '2.0.1';
+        console.log(`Fafa 账本 v${APP_VERSION}`);
+
         // 数据存储
         let balance = 0;
         let history = [];

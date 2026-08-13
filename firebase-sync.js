@@ -1,8 +1,5 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
-import {
-    getFirestore, doc, getDoc, setDoc, collection, getDocs,
-    writeBatch, query, where
-} from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
+import { getFirestore, doc, getDoc, setDoc, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
 
 const firebaseConfig = {
     apiKey: 'AIzaSyAs9N_KZX-XKhzIau_SGOXTmCIfNHfxf6E',
@@ -14,11 +11,8 @@ const firebaseConfig = {
 };
 
 const accountId = 'fafa_main_account';
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
-const legacyRef = doc(db, 'users', accountId);
-const stateRef = doc(db, 'ledger_state', accountId);
-const recordsRef = collection(db, 'ledger_records');
+const db = getFirestore(initializeApp(firebaseConfig));
+const accountRef = doc(db, 'users', accountId);
 let connected = false;
 let running = null;
 
@@ -48,50 +42,63 @@ function normalize(record, index = 0) {
     return {
         ...record,
         id: record.id || legacyId(record, index),
-        accountId,
         createdAt: record.createdAt || record.date || new Date(0).toISOString(),
         updatedAt: record.updatedAt || record.createdAt || record.date || new Date(0).toISOString(),
         deletedAt: record.deletedAt || null
     };
 }
 
-async function readRemote() {
-    const [recordSnapshot, stateSnapshot, legacySnapshot] = await Promise.all([
-        getDocs(query(recordsRef, where('accountId', '==', accountId))),
-        getDoc(stateRef),
-        getDoc(legacyRef)
-    ]);
-    const records = recordSnapshot.docs.map(item => normalize(item.data()));
-    let state = stateSnapshot.exists() ? stateSnapshot.data() : null;
-
-    // 兼容原数据库：仅在逐条记录集合为空时读取旧文档，绝不反向清空旧数据。
-    if (!records.length && legacySnapshot.exists()) {
-        const legacy = legacySnapshot.data();
-        (legacy.history || []).forEach((record, index) => records.push(normalize(record, index)));
-        if (!state) {
-            state = {
-                taskProgress: legacy.taskProgress || {},
-                resetState: legacy.resetState || {},
-                updatedAt: legacy.lastUpdate || ''
-            };
+function mergeRecords(...groups) {
+    const merged = new Map();
+    groups.flat().forEach((raw, index) => {
+        if (!raw) return;
+        const record = normalize(raw, index);
+        const previous = merged.get(record.id);
+        if (!previous || (record.updatedAt || '') >= (previous.updatedAt || '')) {
+            merged.set(record.id, record);
         }
-    }
-    return { records, state };
+    });
+    return [...merged.values()];
 }
 
-async function uploadRecords(records, remoteById) {
+async function readRemote() {
+    const snapshot = await getDoc(accountRef);
+    const data = snapshot.exists() ? snapshot.data() : {};
+    return {
+        data,
+        records: mergeRecords(data.history || [], data.recordEvents || []),
+        state: data.syncState || {
+            taskProgress: data.taskProgress || {},
+            resetState: data.resetState || {},
+            updatedAt: data.lastUpdate || ''
+        }
+    };
+}
+
+async function appendEvents(records, remoteRecords) {
+    const remoteById = new Map(remoteRecords.map(record => [record.id, record]));
     const pending = records.filter(record => {
         const remote = remoteById.get(record.id);
         return !remote || (record.updatedAt || '') > (remote.updatedAt || '');
     });
-    for (let offset = 0; offset < pending.length; offset += 400) {
-        const batch = writeBatch(db);
-        pending.slice(offset, offset + 400).forEach(record => {
-            batch.set(doc(recordsRef, record.id), { ...record, accountId }, { merge: true });
-        });
-        await batch.commit();
+
+    // 每笔变化只追加事件，不写回 history，因此短列表永远不会覆盖完整历史。
+    for (let offset = 0; offset < pending.length; offset += 100) {
+        const chunk = pending.slice(offset, offset + 100);
+        await setDoc(accountRef, {
+            recordEvents: arrayUnion(...chunk),
+            lastSafeSync: new Date().toISOString()
+        }, { merge: true });
     }
     return pending.length;
+}
+
+function friendlyError(error) {
+    const code = error && error.code ? String(error.code) : '';
+    if (code.includes('permission-denied')) return 'Firebase 权限被拒绝';
+    if (code.includes('unavailable')) return 'Firebase 暂时无法连接';
+    if (/超时/.test(String(error && error.message))) return 'Firebase 连接超时';
+    return 'Firebase 同步失败';
 }
 
 async function doSync(localRecords, localState) {
@@ -100,28 +107,24 @@ async function doSync(localRecords, localState) {
         const remote = await timeout(readRemote(), 10000, 'Firebase 连接超时');
         connected = true;
         emit('syncing', '正在安全合并记录…');
+        const records = mergeRecords(remote.records, localRecords);
+        const uploaded = await appendEvents(records, remote.records);
 
-        const remoteById = new Map(remote.records.map(record => [record.id, record]));
-        const merged = new Map(remoteById);
-        localRecords.map(normalize).forEach(record => {
-            const previous = merged.get(record.id);
-            if (!previous || (record.updatedAt || '') >= (previous.updatedAt || '')) merged.set(record.id, record);
-        });
-        const records = [...merged.values()];
-        const uploaded = await uploadRecords(records, remoteById);
-
-        const remoteTime = remote.state ? (remote.state.updatedAt || '') : '';
+        const remoteTime = remote.state.updatedAt || '';
         const localTime = localState.updatedAt || '';
         const state = remoteTime > localTime ? remote.state : localState;
-        if (!remote.state || localTime >= remoteTime) {
-            await setDoc(stateRef, { ...localState, accountId }, { merge: true });
+        if (localTime >= remoteTime) {
+            await setDoc(accountRef, {
+                syncState: localState,
+                lastSafeSync: new Date().toISOString()
+            }, { merge: true });
         }
         emit('online', uploaded ? `已同步 ${uploaded} 条记录` : '云端已同步');
         return { online: true, records, state };
     } catch (error) {
         connected = false;
         console.warn('Firebase 暂时不可用：', error);
-        emit('offline', '当前离线，记录已安全保存在本机');
+        emit('offline', `${friendlyError(error)}，记录已保存在本机`);
         return { online: false, records: localRecords, state: localState };
     }
 }
@@ -135,4 +138,4 @@ function sync(localRecords, localState) {
 window.FafaSync = { sync, isConnected: () => connected };
 window.dispatchEvent(new CustomEvent('fafa-sync-ready'));
 window.addEventListener('online', () => window.dispatchEvent(new CustomEvent('fafa-network-restored')));
-window.addEventListener('offline', () => emit('offline', '网络已断开，记录已安全保存在本机'));
+window.addEventListener('offline', () => emit('offline', '网络已断开，记录已保存在本机'));

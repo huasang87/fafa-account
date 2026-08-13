@@ -7,25 +7,20 @@
 - Firebase 无法访问时，每笔记录先保存在当前浏览器。
 - Firebase 恢复后，程序按记录唯一 ID 逐条合并。
 - 不再把整个本地历史数组覆盖到云端。
-- 原来的 `users/fafa_main_account` 文档保持只读兼容，首次连接时自动迁移其中的历史记录。
-- 新记录保存在 `ledger_records`，任务状态保存在 `ledger_state/fafa_main_account`。
+- 继续只使用原来的 `users/fafa_main_account` 文档，不需要新增集合或修改规则。
+- 新记录作为 `recordEvents` 逐条追加；不会把短的 `history` 覆盖到云端。
 - “清空数据”使用软删除标记，记录仍可恢复。
 
 ## 上线前检查
 
-请在 Firebase 控制台的 Firestore Rules 中确认网页允许读写以下集合：
-
-- `ledger_records`
-- `ledger_state`
-
-如果目前使用测试模式，通常无需额外调整。长期使用建议增加家庭登录后再收紧权限；现在的应用没有登录功能，请不要公开传播网址。
+只要旧版能够正常读写 `users/fafa_main_account`，新版无需修改规则。长期使用建议增加家庭登录后再收紧权限；现在的应用没有登录功能，请不要公开传播网址。
 
 ## 推荐验证
 
 1. 开 VPN 打开：顶部应显示“云端已同步”。
 2. 关闭 VPN 后新增记录：顶部显示离线，刷新后记录仍在。
 3. 再开 VPN：不刷新也会在网络恢复事件后尝试同步；如果系统没有触发该事件，刷新一次即可。
-4. Firebase 控制台的 `ledger_records` 中应增加一条独立文档。
+4. Firebase 控制台的 `users/fafa_main_account` 中应出现 `recordEvents` 字段。
 5. 另一台设备打开，应合并显示旧数据和新数据。
 
 确认以上步骤正常后，才让孩子继续日常使用。
