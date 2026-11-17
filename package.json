@@ -1,6 +1,6 @@
 {
   "name": "fafa-account",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "private": true,
   "type": "module",
   "scripts": { "test": "node --test tests/*.test.js", "preview": "node scripts/preview.mjs" }

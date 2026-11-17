@@ -73,12 +73,27 @@ test('wish changes do not change accounting; reach flag responds to spending, ed
   account.wishState.item.price = 60; assert.equal(wishProgress(account).reached, true);
   account.wishState.item = null; assert.equal(wishProgress(account), null); assert.equal(balanceOf(account.records), 68);
 });
-test('new daily limits are 10 and 5; migration does not reset existing daily progress', () => {
+test('weekly limits are 10 and 5; existing progress survives the switch and midnight', () => {
   const today = new Date(2026, 10, 17, 12);
   const state = currentTaskState({ taskProgress: { 洗脸刷牙: 2, 洗澡: 1 }, resetState: { lastDailyReset: '2026-11-17', lastWeekReset: weekKey(today) } }, today);
   assert.equal(TASKS[1].max, 10); assert.equal(TASKS[2].max, 5);
+  assert.equal(TASKS[1].period, 'weekly'); assert.equal(TASKS[2].period, 'weekly');
   assert.equal(taskCount(state, TASKS[1], today), 2); assert.equal(taskCount(state, TASKS[2], today), 1);
-  assert.equal(taskCount(state, TASKS[1], new Date(2026, 10, 18, 0)), 0);
+  for (const task of [TASKS[1], TASKS[2]]) {
+    assert.equal(taskCount(state, task, new Date(2026, 10, 18, 0)), state.taskProgress[task.name]);
+    assert.equal(taskCount(state, task, new Date(2026, 10, 22, 23, 59)), state.taskProgress[task.name]);
+    assert.equal(taskCount(state, task, new Date(2026, 10, 23, 0)), 0);
+  }
+});
+test('all weekly counts roll over together, including ISO weeks across New Year', () => {
+  const date = new Date(2026, 11, 31, 12);
+  const state = currentTaskState(emptyAccount().taskState, date);
+  state.taskProgress = Object.fromEntries(TASKS.map(t => [t.name, t.max]));
+  for (const task of TASKS) {
+    assert.equal(taskCount(state, task, new Date(2027, 0, 3, 23, 59)), task.max);
+    assert.equal(taskCount(state, task, new Date(2027, 0, 4, 0)), 0);
+  }
+  assert.deepEqual(currentTaskState(state, new Date(2027, 0, 4, 0)).taskProgress, Object.fromEntries(TASKS.map(t => [t.name, 0])));
 });
 test('amount validation supports cents, rejects truncation, negative values and exponent notation', () => {
   assert.equal(parseAmount('12.50'), 12.5); assert.equal(parseAmount('0.01'), .01);

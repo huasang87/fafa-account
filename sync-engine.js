@@ -1,4 +1,4 @@
-import { accountFromRemote, mergeAccounts } from './core.js?v=3.0.0';
+import { accountFromRemote, mergeAccounts } from './core.js?v=3.0.1';
 
 // Pure transaction plan. No history replacement, deletion, or whole-document overwrite.
 export function planSync(data, local) {

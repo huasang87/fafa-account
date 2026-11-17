@@ -1,6 +1,6 @@
 import { VERSION, TASKS, BACKUP_KEY, STORAGE_KEY, money, parseAmount, loadAccount, saveAccount,
   emptyAccount, mergeAccounts, balanceOf, visibleRecords, wishProgress, taskCount, currentTaskState,
-  nextTimestamp, makeRecord, snapshotLocal } from './core.js?v=3.0.0';
+  nextTimestamp, makeRecord, snapshotLocal } from './core.js?v=3.0.1';
 
 const $ = id => document.getElementById(id);
 const preview = new URLSearchParams(location.search).get('preview') === '1';
@@ -32,7 +32,7 @@ async function syncNow() {
   try {
     setStatus('connecting', '正在同步…');
     warning = setTimeout(() => setStatus('offline', '连接较慢 · 本机已保存'), 12000);
-    syncModule ||= await import('./firebase-sync.js?v=3.0.0');
+    syncModule ||= await import('./firebase-sync.js?v=3.0.1');
     const remote = await syncModule.syncAccount(cloneAccount());
     // Account may have changed while the network request was in flight.
     const merged = mergeAccounts(account, remote);
@@ -304,7 +304,7 @@ $('expenseForm').onsubmit = event => {
 };
 $('exportData').onclick = () => { if (exportBackup()) toast('已生成完整账本备份'); };
 $('clearData').onclick = confirmClear;
-$('resetTasks').onclick = () => message('↻', '刷新任务次数？', '每日任务和每周任务次数都会归零。\n已有的收入和账目会保留。', [
+$('resetTasks').onclick = () => message('↻', '刷新任务次数？', '所有周任务次数都会归零。\n已有的收入和账目会保留。', [
   { label: '取消', kind: 'primary', action: closeDialog }, { label: '确认刷新', action: () => {
     const next = cloneAccount(); next.taskState = currentTaskState(next.taskState); next.taskState.taskProgress = Object.fromEntries(TASKS.map(t => [t.name, 0])); next.taskState.updatedAt = nextTimestamp(next.taskState.updatedAt);
     if (commit(next)) { closeDialog(); toast('任务次数已刷新'); }
