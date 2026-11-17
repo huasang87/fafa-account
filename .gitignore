@@ -1,0 +1,5 @@
+node_modules/
+backups/
+test-results/
+*.private.json
+.env*
