@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { TASKS, STORAGE_KEY, BACKUP_KEY, loadAccount, saveAccount, mergeAccounts, mergeRecords, balanceOf,
-  visibleRecords, wishProgress, emptyAccount, accountFromRemote, parseAmount, currentTaskState, taskCount, weekKey } from '../core.js';
+  visibleRecords, wishProgress, emptyAccount, accountFromRemote, parseAmount, currentTaskState, taskCount, weekKey, makeRecord } from '../core.js';
 import { planSync } from '../sync-engine.js';
 
 const record = (id, amount = 10, extra = {}) => ({ id, type: '收入', name: '测试', amount,
@@ -99,6 +99,28 @@ test('amount validation supports cents, rejects truncation, negative values and 
   assert.equal(parseAmount('12.50'), 12.5); assert.equal(parseAmount('0.01'), .01);
   for (const input of ['0', '-1', '1.234', '12abc', '1e3', 'Infinity', '']) assert.equal(parseAmount(input), null);
   assert.equal(balanceOf([record('a', .1), record('b', .2)]), .3);
+});
+test('swimming starts independently; climbing price changes never reprice existing records', () => {
+  const today = new Date(2026, 10, 20, 12);
+  const climbing = TASKS.find(t => t.name === '攀岩课'), swimming = TASKS.find(t => t.name === '游泳');
+  assert.equal(climbing.amount, 6); assert.equal(climbing.max, 1);
+  assert.equal(swimming.amount, 6); assert.equal(swimming.max, 2); assert.equal(swimming.period, 'weekly');
+  const previous = { taskProgress: { 攀岩课: 1, 洗澡: 3 }, resetState: { lastWeekReset: weekKey(today) }, updatedAt: today.toISOString() };
+  const next = currentTaskState(previous, today);
+  assert.equal(taskCount(next, swimming, today), 0);
+  assert.equal(taskCount(next, climbing, today), 1); assert.equal(next.taskProgress['洗澡'], 3);
+  assert.equal(previous.taskProgress['游泳'], undefined);
+  next.taskProgress['游泳'] = 2;
+  assert.equal(taskCount(next, swimming, new Date(2026, 10, 22)), 2);
+  assert.equal(taskCount(next, swimming, new Date(2026, 10, 23)), 0);
+  const remote = { history: [record('old-climb', 10, { name: '攀岩课' })], syncState: previous };
+  const account = accountFromRemote(remote);
+  assert.equal(balanceOf(account.records), 10);
+  assert.deepEqual(planSync(remote, account).pending, []);
+  account.records.push(makeRecord('收入', climbing.name, climbing.amount));
+  account.records.push(makeRecord('收入', swimming.name, swimming.amount));
+  assert.equal(balanceOf(account.records), 22);
+  assert.equal(account.records.find(r => r.id === 'old-climb').amount, 10);
 });
 test('history sorts by date rather than merge order and hides tombstones only in the view', () => {
   const records = [record('old'), record('new', 1, { createdAt: '2026-11-18T00:00:00Z' }), record('deleted', 3, { deletedAt: 'yes' })];

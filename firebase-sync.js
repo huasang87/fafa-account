@@ -1,7 +1,7 @@
 import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js';
 import { getFirestore, doc, runTransaction, arrayUnion } from 'https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js';
-import config from './firebase-config.js?v=3.0.1';
-import { planSync } from './sync-engine.js?v=3.0.1';
+import config from './firebase-config.js?v=3.0.2';
+import { planSync } from './sync-engine.js?v=3.0.2';
 
 const db = getFirestore(initializeApp(config));
 const accountRef = doc(db, 'users', 'fafa_main_account');

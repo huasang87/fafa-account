@@ -1,6 +1,6 @@
 import { VERSION, TASKS, BACKUP_KEY, STORAGE_KEY, money, parseAmount, loadAccount, saveAccount,
   emptyAccount, mergeAccounts, balanceOf, visibleRecords, wishProgress, taskCount, currentTaskState,
-  nextTimestamp, makeRecord, snapshotLocal } from './core.js?v=3.0.1';
+  nextTimestamp, makeRecord, snapshotLocal } from './core.js?v=3.0.2';
 
 const $ = id => document.getElementById(id);
 const preview = new URLSearchParams(location.search).get('preview') === '1';
@@ -32,7 +32,7 @@ async function syncNow() {
   try {
     setStatus('connecting', '正在同步…');
     warning = setTimeout(() => setStatus('offline', '连接较慢 · 本机已保存'), 12000);
-    syncModule ||= await import('./firebase-sync.js?v=3.0.1');
+    syncModule ||= await import('./firebase-sync.js?v=3.0.2');
     const remote = await syncModule.syncAccount(cloneAccount());
     // Account may have changed while the network request was in flight.
     const merged = mergeAccounts(account, remote);
@@ -60,6 +60,10 @@ function renderTasks() {
     button.className = `task-card${count >= task.max ? ' completed' : ''}`;
     button.setAttribute('aria-label', `${task.name}，奖励${task.amount}元，已完成${count}次，上限${task.max}次`);
     button.innerHTML = `<span class="task-icon" aria-hidden="true">${task.icon}</span><span class="task-name">${task.name}</span><span class="task-reward">+${task.amount} 元</span><span class="task-count">${count}/${task.max}</span>`;
+    if (task.iconImage) {
+      const image = document.createElement('img'); image.src = task.iconImage; image.alt = '';
+      image.className = 'task-image'; button.querySelector('.task-icon').replaceChildren(image);
+    }
     button.addEventListener('click', () => earn(task, button));
     return button;
   }));
@@ -108,6 +112,11 @@ function renderHistory() {
     const row = document.createElement('div'); row.className = 'history-row';
     const icon = document.createElement('span'); icon.className = 'history-icon'; icon.setAttribute('aria-hidden', 'true');
     icon.textContent = TASKS.find(t => t.name === record.name)?.icon || (record.type === '收入' ? '🪙' : '🛍️');
+    const taskImage = TASKS.find(t => t.name === record.name)?.iconImage;
+    if (taskImage) {
+      const image = document.createElement('img'); image.src = taskImage; image.alt = '';
+      image.className = 'task-image'; icon.replaceChildren(image);
+    }
     const copy = document.createElement('div'); copy.className = 'history-copy';
     const name = document.createElement('div'); name.className = 'history-name'; name.textContent = record.name;
     const date = document.createElement('div'); date.className = 'history-date'; date.textContent = record.date;

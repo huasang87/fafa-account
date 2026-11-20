@@ -1,4 +1,4 @@
-export const VERSION = '3.0.1';
+export const VERSION = '3.0.2';
 export const STORAGE_KEY = 'fafaAccountV3';
 export const BACKUP_KEY = 'fafaBackupBeforeV3';
 export const LEGACY_KEYS = ['fafaBalance', 'fafaHistory', 'taskProgress', 'resetState', 'stateUpdatedAt', 'lastDailyReset', 'lastWeekReset', 'lastWeek', 'weeklyTasks'];
@@ -6,7 +6,8 @@ export const TASKS = [
   { name: '每周领零花钱', icon: '🪙', amount: 10, max: 1, period: 'weekly' },
   { name: '洗脸刷牙', icon: '🪥', amount: 2, max: 10, period: 'weekly' },
   { name: '洗澡', icon: '🛁', amount: 4, max: 5, period: 'weekly' },
-  { name: '攀岩课', icon: '🧗', amount: 10, max: 1, period: 'weekly' }
+  { name: '攀岩课', icon: '🧗', amount: 6, max: 1, period: 'weekly' },
+  { name: '游泳', icon: '🏊', iconImage: 'assets/swimming.png', amount: 6, max: 2, period: 'weekly' }
 ];
 export const money = value => Number(value).toLocaleString('zh-CN', { maximumFractionDigits: 2 });
 export function parseAmount(value) {
